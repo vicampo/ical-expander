@@ -11,6 +11,7 @@ class IcalExpander {
   constructor(opts) {
     this.maxIterations = opts.maxIterations != null ? opts.maxIterations : 1000;
     this.skipInvalidDates = opts.skipInvalidDates != null ? opts.skipInvalidDates : false;
+    this.skipWithRecuranceExceptions = opts.skipWithRecuranceExceptions != null ? opts.skipWithRecuranceExceptions : false;
 
     this.jCalData = ICAL.parse(opts.ics);
     this.component = new ICAL.Component(this.jCalData);
@@ -60,8 +61,13 @@ class IcalExpander {
       occurrences: [],
     };
 
-    this.events.filter(e => !e.isRecurrenceException()).forEach((event) => {
+    this.events.filter(e => (!this.skipWithRecuranceExceptions || !e.isRecurrenceException())).forEach((event) => {
       const exdates = [];
+
+      if (event.summary === 'Sprint-Planung') {
+        console.log(e)
+      }
+
 
       event.component.getAllProperties('exdate').forEach((exdateProp) => {
         const exdate = exdateProp.getFirstValue();
@@ -71,7 +77,7 @@ class IcalExpander {
       // Recurring event is handled differently
       if (event.isRecurring()) {
         const iterator = event.iterator();
-
+  
         let next;
         let i = 0;
 
@@ -91,6 +97,18 @@ class IcalExpander {
             // We have passed the max date, stop
             if (before && startTime > before.getTime()) break;
 
+            if (event.summary === 'Sprint-Planung') {
+              console.log(
+                'event',
+                'after', after.getTime(),
+                'startTime', startTime,
+                'after smaller as start', after.getTime() <= startTime,
+                'before', before.getTime(),
+                'endTime', endTime,
+                'before bigger as end', before.getTime() >= endTime
+              ) // , event.summary, exception)
+            }
+
             // Check that we are within our range
             if (isEventWithinRange(startTime, endTime)) {
               if (exception) {
@@ -108,6 +126,9 @@ class IcalExpander {
 
       // Non-recurring event:
       const { startTime, endTime } = getTimes(event);
+      if (event.summary === 'Sprint-Planung') {
+        console.log(startTime, endTime, event.start, event.end)
+      }
 
       if (isEventWithinRange(startTime, endTime)) ret.events.push(event);
     });
