@@ -64,11 +64,6 @@ class IcalExpander {
     this.events.filter(e => (!this.skipWithRecuranceExceptions || !e.isRecurrenceException())).forEach((event) => {
       const exdates = [];
 
-      if (event.summary === 'Sprint-Planung') {
-        console.log(e)
-      }
-
-
       event.component.getAllProperties('exdate').forEach((exdateProp) => {
         const exdate = exdateProp.getFirstValue();
         exdates.push(exdate.toJSDate().getTime());
@@ -97,18 +92,6 @@ class IcalExpander {
             // We have passed the max date, stop
             if (before && startTime > before.getTime()) break;
 
-            if (event.summary === 'Sprint-Planung') {
-              console.log(
-                'event',
-                'after', after.getTime(),
-                'startTime', startTime,
-                'after smaller as start', after.getTime() <= startTime,
-                'before', before.getTime(),
-                'endTime', endTime,
-                'before bigger as end', before.getTime() >= endTime
-              ) // , event.summary, exception)
-            }
-
             // Check that we are within our range
             if (isEventWithinRange(startTime, endTime)) {
               if (exception) {
@@ -126,9 +109,6 @@ class IcalExpander {
 
       // Non-recurring event:
       const { startTime, endTime } = getTimes(event);
-      if (event.summary === 'Sprint-Planung') {
-        console.log(startTime, endTime, event.start, event.end)
-      }
 
       if (isEventWithinRange(startTime, endTime)) ret.events.push(event);
     });
